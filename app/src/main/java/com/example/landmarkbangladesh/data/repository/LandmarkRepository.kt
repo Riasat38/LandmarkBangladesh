@@ -85,6 +85,7 @@ class LandmarkRepository {
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         try {
             Log.d("LandmarkRepository", "🆕 Creating new landmark: $title at ($latitude, $longitude)")
+            Log.d("LandmarkRepository", "📷 Image URI provided: ${imageUri != null}")
 
             val titleBody = title.toRequestBody("text/plain".toMediaTypeOrNull())
             val latBody = latitude.toString().toRequestBody("text/plain".toMediaTypeOrNull())
@@ -92,21 +93,35 @@ class LandmarkRepository {
 
             var imagePart: MultipartBody.Part? = null
             if (imageUri != null && context != null) {
+                Log.d("LandmarkRepository", "🔄 Preparing image for upload...")
                 imagePart = prepareImagePart(imageUri, context)
+                if (imagePart != null) {
+                    Log.d("LandmarkRepository", "✅ Image part prepared successfully")
+                } else {
+                    Log.w("LandmarkRepository", "⚠️ Failed to prepare image part, continuing without image")
+                }
+            } else {
+                Log.d("LandmarkRepository", "ℹ️ No image provided for this landmark")
             }
 
+            Log.d("LandmarkRepository", "🌐 Sending POST request to API...")
             val response = apiService.createLandmark(titleBody, latBody, lonBody, imagePart)
 
             if (response.isSuccessful) {
                 val result = response.body()
-                Log.d("LandmarkRepository", "✅ Successfully created landmark: ${result?.message}")
+                Log.d("LandmarkRepository", "✅ Successfully created landmark")
+                Log.d("LandmarkRepository", "📋 API Response: ${result?.status} - ${result?.message}")
                 Result.success(result ?: ApiResponse(status = "success"))
             } else {
-                Log.e("LandmarkRepository", "❌ Failed to create landmark: ${response.code()}")
+                val errorBody = response.errorBody()?.string()
+                Log.e("LandmarkRepository", "❌ Failed to create landmark: HTTP ${response.code()}")
+                Log.e("LandmarkRepository", "📋 Error response: ${response.message()}")
+                Log.e("LandmarkRepository", "📋 Error body: $errorBody")
                 Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
             }
         } catch (e: Exception) {
             Log.e("LandmarkRepository", "❌ Error creating landmark: ${e.message}", e)
+            e.printStackTrace()
             Result.failure(e)
         }
     }
@@ -172,17 +187,64 @@ class LandmarkRepository {
 
     private fun prepareImagePart(imageUri: Uri, context: Context): MultipartBody.Part? {
         return try {
+            Log.d("LandmarkRepository", "📷 Preparing image part from URI: $imageUri")
+
             val contentResolver = context.contentResolver
+
+            // Get MIME type
+            val mimeType = contentResolver.getType(imageUri) ?: "image/jpeg"
+            Log.d("LandmarkRepository", "📄 Image MIME type: $mimeType")
+
+            // Open input stream
             val inputStream = contentResolver.openInputStream(imageUri)
-            val file = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.jpg")
-            file.outputStream().use { outputStream ->
-                inputStream?.copyTo(outputStream)
+            if (inputStream == null) {
+                Log.e("LandmarkRepository", "❌ Cannot open input stream for URI: $imageUri")
+                return null
             }
 
-            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-            MultipartBody.Part.createFormData("image", file.name, requestFile)
+            // Create temporary file with proper extension
+            val extension = when {
+                mimeType.contains("png") -> "png"
+                mimeType.contains("jpg") || mimeType.contains("jpeg") -> "jpg"
+                else -> "jpg"
+            }
+
+            val fileName = "upload_image_${System.currentTimeMillis()}.$extension"
+            val file = File(context.cacheDir, fileName)
+
+            Log.d("LandmarkRepository", "💾 Creating temp file: ${file.absolutePath}")
+
+            // Copy stream to file
+            file.outputStream().use { outputStream ->
+                val bytesWritten = inputStream.copyTo(outputStream)
+                Log.d("LandmarkRepository", "📝 Wrote $bytesWritten bytes to temp file")
+            }
+            inputStream.close()
+
+            // Verify file was created and has content
+            if (!file.exists() || file.length() == 0L) {
+                Log.e("LandmarkRepository", "❌ Temp file creation failed or file is empty")
+                return null
+            }
+
+            Log.d("LandmarkRepository", "✅ Temp file created successfully: ${file.length()} bytes")
+
+            // Create request body with proper MIME type
+            val mediaType = when (extension) {
+                "png" -> "image/png"
+                "jpg", "jpeg" -> "image/jpeg"
+                else -> "image/jpeg"
+            }.toMediaTypeOrNull()
+
+            val requestFile = file.asRequestBody(mediaType)
+            val imagePart = MultipartBody.Part.createFormData("image", fileName, requestFile)
+
+            Log.d("LandmarkRepository", "🚀 Image part prepared successfully for upload")
+            return imagePart
+
         } catch (e: Exception) {
-            Log.e("LandmarkRepository", "Error preparing image part: ${e.message}")
+            Log.e("LandmarkRepository", "❌ Error preparing image part: ${e.message}", e)
+            e.printStackTrace()
             null
         }
     }

@@ -1,107 +1,226 @@
 package com.example.landmarkbangladesh.ui.screens
 
-import android.content.Context
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
+import android.util.Log
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.landmarkbangladesh.ui.viewmodel.LandmarkUiState
+import com.example.landmarkbangladesh.ui.viewmodel.LandmarkViewModel
+import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OverviewScreen() {
+fun OverviewScreen(
+    viewModel: LandmarkViewModel = viewModel()
+) {
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Bangladesh center coordinates
-    val bangladeshCenter = remember { GeoPoint(23.6850, 90.3563) }
-
-    // Initialize OSMDroid configuration
+    // Initialize OSMDroid configuration and refresh data
     LaunchedEffect(Unit) {
-        Configuration.getInstance().userAgentValue = "LandmarkBangladesh"
+        Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", 0))
+        Log.d("OverviewScreen", "🔄 Screen loaded, refreshing landmark data for map...")
+        viewModel.loadLandmarks()
     }
 
-    // State to track if we need to center the map
-    val shouldCenterMap = remember { androidx.compose.runtime.mutableStateOf(true) }
-
-    // Trigger centering when screen is opened
-    LaunchedEffect(key1 = bangladeshCenter) {
-        shouldCenterMap.value = true
-    }
-
-    Box(
+    Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // OpenStreetMap View
-        AndroidView(
-            factory = { ctx ->
-                MapView(ctx).apply {
-                    // Configure map settings
-                    setTileSource(TileSourceFactory.MAPNIK)
-                    setMultiTouchControls(true)
-
-                    // Set minimum and maximum zoom levels
-                    minZoomLevel = 5.0
-                    maxZoomLevel = 18.0
-
-                    // Set initial position to Bangladesh center
-                    controller.setZoom(7.0)
-                    controller.setCenter(bangladeshCenter)
-
-                    // Add marker for Bangladesh center
-                    val marker = Marker(this).apply {
-                        position = bangladeshCenter
-                        title = "Bangladesh"
-                        snippet = "The heart of Bangladesh - Dhaka Region"
-                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    }
-                    overlays.add(marker)
-
-                    // Force center the map when created
-                    post {
-                        controller.animateTo(bangladeshCenter, 7.0, 1000L)
-                        shouldCenterMap.value = false
-                    }
-                }
+        // Top bar
+        TopAppBar(
+            title = {
+                Text(
+                    text = "Landmarks Map Overview",
+                    style = MaterialTheme.typography.headlineMedium
+                )
             },
-            modifier = Modifier.fillMaxSize(),
-            update = { mapView ->
-                // Center on Bangladesh when screen is opened or updated
-                if (shouldCenterMap.value) {
-                    mapView.controller.animateTo(bangladeshCenter, 7.0, 800L)
-                    shouldCenterMap.value = false
+            actions = {
+                IconButton(
+                    onClick = {
+                        Log.d("OverviewScreen", "Refresh button clicked")
+                        viewModel.loadLandmarks()
+                    }
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                 }
-                mapView.invalidate()
             }
         )
 
-        // Title overlay
-        Text(
-            text = "🇧🇩 Bangladesh Landmarks",
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color.White,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .background(
-                    Color.Black.copy(alpha = 0.7f),
-                    shape = MaterialTheme.shapes.medium
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+        when (val currentState = uiState) {
+            is LandmarkUiState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Loading landmarks on map...",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
 
+            is LandmarkUiState.Success -> {
+                val landmarks = currentState.landmarks
+
+                // Stats card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "📍 ${landmarks.size} landmarks mapped across Bangladesh",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+
+                // Map view
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp),
+                    factory = { context ->
+                        Log.d("OverviewScreen", "Creating MapView with ${landmarks.size} landmarks")
+
+                        MapView(context).apply {
+                            setTileSource(TileSourceFactory.MAPNIK)
+                            setMultiTouchControls(true)
+
+                            val mapController: IMapController = controller
+
+                            // Center map on Bangladesh
+                            val bangladeshCenter = GeoPoint(23.6850, 90.3563) // Dhaka center
+                            mapController.setCenter(bangladeshCenter)
+                            mapController.setZoom(7.0)
+
+                            // Add markers for each landmark
+                            landmarks.forEach { landmark ->
+                                val marker = Marker(this).apply {
+                                    position = GeoPoint(landmark.latitude, landmark.longitude)
+                                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                    title = landmark.title
+                                    snippet = "${landmark.location}\n${landmark.category}"
+
+                                    // Set marker icon based on category
+                                    when (landmark.category.lowercase()) {
+                                        "natural heritage", "natural" -> {
+                                            // Green marker for natural landmarks
+                                        }
+                                        "beach", "island" -> {
+                                            // Blue marker for beaches
+                                        }
+                                        "historical" -> {
+                                            // Brown marker for historical sites
+                                        }
+                                        "religious" -> {
+                                            // Purple marker for religious sites
+                                        }
+                                        else -> {
+                                            // Default marker
+                                        }
+                                    }
+                                }
+
+                                overlays.add(marker)
+                                Log.d("OverviewScreen", "Added marker for ${landmark.title} at (${landmark.latitude}, ${landmark.longitude})")
+                            }
+
+                            // Refresh the map
+                            invalidate()
+                        }
+                    },
+                    update = { mapView ->
+                        // Update markers when landmarks change
+                        Log.d("OverviewScreen", "Updating map with ${landmarks.size} landmarks")
+
+                        // Clear existing markers
+                        mapView.overlays.clear()
+
+                        // Add updated markers
+                        landmarks.forEach { landmark ->
+                            val marker = Marker(mapView).apply {
+                                position = GeoPoint(landmark.latitude, landmark.longitude)
+                                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                title = landmark.title
+                                snippet = "${landmark.location}\n${landmark.category}"
+                            }
+
+                            mapView.overlays.add(marker)
+                        }
+
+                        // Refresh the map
+                        mapView.invalidate()
+                    }
+                )
+            }
+
+            is LandmarkUiState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Error loading landmarks",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = currentState.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.loadLandmarks() }
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+            }
+        }
     }
 }

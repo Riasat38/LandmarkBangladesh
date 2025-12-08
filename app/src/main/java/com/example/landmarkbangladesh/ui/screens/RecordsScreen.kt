@@ -21,6 +21,12 @@ fun RecordsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Refresh data when screen is composed
+    LaunchedEffect(Unit) {
+        Log.d("RecordsScreen", "🔄 Screen loaded, refreshing landmark data...")
+        viewModel.loadLandmarks()
+    }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -89,7 +95,7 @@ fun RecordsScreen(
                                 // TODO: Navigate to landmark details
                             },
                             onEdit = {
-                                // TODO: Navigate to edit screen with landmark data
+                                // TODO: Navigate to FormScreen with landmark data
                                 Log.d("RecordsScreen", "Edit landmark: ${landmark.title}")
                             },
                             onDelete = {
