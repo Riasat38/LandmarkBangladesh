@@ -60,7 +60,6 @@ fun FormScreen(
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // State for current photo URI (created dynamically)
 
     // Permission launchers
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -86,7 +85,7 @@ fun FormScreen(
         }
     )
 
-    // Camera permission will be requested by the system when needed
+
 
     // Image launchers
     val galleryLauncher = rememberLauncherForActivityResult(

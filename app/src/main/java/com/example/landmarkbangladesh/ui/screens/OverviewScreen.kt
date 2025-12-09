@@ -2,9 +2,7 @@ package com.example.landmarkbangladesh.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +21,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
@@ -30,6 +29,7 @@ fun OverviewScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Initialize OSMDroid configuration and refresh data
     LaunchedEffect(Unit) {
@@ -38,9 +38,25 @@ fun OverviewScreen(
         viewModel.loadLandmarks()
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    // Show snackbar when landmarks are loaded successfully
+    LaunchedEffect(uiState) {
+        if (uiState is LandmarkUiState.Success) {
+            val landmarkCount = (uiState as LandmarkUiState.Success).landmarks.size
+            snackbarHostState.showSnackbar(
+                message = "Map Successfully Loaded with $landmarkCount landmark${if (landmarkCount != 1) "s" else ""}",
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
         // Top bar
         TopAppBar(
             title = {
@@ -83,34 +99,6 @@ fun OverviewScreen(
             is LandmarkUiState.Success -> {
                 val landmarks = currentState.landmarks
 
-                // Stats card
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.LocationOn,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "📍 ${landmarks.size} landmarks mapped across Bangladesh",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-
                 // Map view
                 AndroidView(
                     modifier = Modifier
@@ -126,12 +114,12 @@ fun OverviewScreen(
 
                             val mapController: IMapController = controller
 
-                            // Center map on Bangladesh
+                            // Center
                             val bangladeshCenter = GeoPoint(23.6850, 90.3563) // Dhaka center
                             mapController.setCenter(bangladeshCenter)
                             mapController.setZoom(7.0)
 
-                            // Add markers for each landmark
+                            // markers for each landmark
                             landmarks.forEach { landmark ->
                                 val marker = Marker(this).apply {
                                     position = GeoPoint(landmark.latitude, landmark.longitude)
@@ -139,31 +127,13 @@ fun OverviewScreen(
                                     title = landmark.title
                                     snippet = "${landmark.location}\n${landmark.category}"
 
-                                    // Set marker icon based on category
-                                    when (landmark.category.lowercase()) {
-                                        "natural heritage", "natural" -> {
-                                            // Green marker for natural landmarks
-                                        }
-                                        "beach", "island" -> {
-                                            // Blue marker for beaches
-                                        }
-                                        "historical" -> {
-                                            // Brown marker for historical sites
-                                        }
-                                        "religious" -> {
-                                            // Purple marker for religious sites
-                                        }
-                                        else -> {
-                                            // Default marker
-                                        }
-                                    }
                                 }
 
                                 overlays.add(marker)
                                 Log.d("OverviewScreen", "Added marker for ${landmark.title} at (${landmark.latitude}, ${landmark.longitude})")
                             }
 
-                            // Refresh the map
+                            // Refresh map
                             invalidate()
                         }
                     },
@@ -186,7 +156,7 @@ fun OverviewScreen(
                             mapView.overlays.add(marker)
                         }
 
-                        // Refresh the map
+                        // Refresh
                         mapView.invalidate()
                     }
                 )
@@ -222,5 +192,6 @@ fun OverviewScreen(
                 }
             }
         }
+    }
     }
 }

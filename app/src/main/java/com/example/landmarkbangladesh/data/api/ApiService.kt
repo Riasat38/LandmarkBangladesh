@@ -9,11 +9,11 @@ import retrofit2.http.*
 
 interface ApiService {
 
-    // Read (GET): Retrieve all landmarks as a JSON list
+
     @GET("api.php")
     suspend fun getLandmarks(): Response<List<LandmarkResponse>>
 
-    // Create (POST): Submit a new landmark with title, coordinates, and image
+
     @Multipart
     @POST("api.php")
     suspend fun createLandmark(
@@ -23,7 +23,6 @@ interface ApiService {
         @Part image: MultipartBody.Part?
     ): Response<ApiResponse>
 
-    // Update (PUT): Modify an existing record (title, coordinates, or image)
     @Multipart
     @PUT("api.php")
     suspend fun updateLandmark(
@@ -34,7 +33,7 @@ interface ApiService {
         @Part image: MultipartBody.Part?
     ): Response<ApiResponse>
 
-    // Delete (DELETE): Remove a record permanently
+
     @HTTP(method = "DELETE", path = "api.php", hasBody = true)
     @FormUrlEncoded
     suspend fun deleteLandmark(
