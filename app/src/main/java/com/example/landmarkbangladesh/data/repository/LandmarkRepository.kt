@@ -252,12 +252,23 @@ class LandmarkRepository {
     // Convert API response to domain model
     private fun LandmarkResponse.toLandmark(): Landmark? {
         return try {
+            // Fix image URL - prepend base URL if it's a relative path
+            val imageUrl = this.image?.let { img ->
+                when {
+                    img.startsWith("http://") || img.startsWith("https://") -> img
+                    img.isNotEmpty() -> "https://labs.anontech.info/cse489/t3/$img"
+                    else -> ""
+                }
+            } ?: ""
+
+            Log.d("LandmarkRepository", "📷 Image URL for '${this.title}': $imageUrl")
+
             Landmark(
                 id = this.id ?: 0,
                 title = this.title ?: "Unknown Landmark",
                 location = "Lat: ${this.lat ?: 0.0}, Lon: ${this.lon ?: 0.0}",
                 description = "Created: ${this.created_at ?: "Unknown"}",
-                image = this.image ?: "",
+                image = imageUrl,
                 latitude = this.lat ?: 0.0,
                 longitude = this.lon ?: 0.0,
                 category = "Bangladesh Landmark"

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.landmarkbangladesh.ui.components.LandmarkCard
+import com.example.landmarkbangladesh.ui.viewmodel.CrudOperationState
 import com.example.landmarkbangladesh.ui.viewmodel.LandmarkUiState
 import com.example.landmarkbangladesh.ui.viewmodel.LandmarkViewModel
 
@@ -20,6 +21,8 @@ fun RecordsScreen(
     viewModel: LandmarkViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val crudOperationState by viewModel.crudOperationState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Refresh data when screen is composed
     LaunchedEffect(Unit) {
@@ -27,9 +30,37 @@ fun RecordsScreen(
         viewModel.loadLandmarks()
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    // Observe CRUD operations for success/error feedback
+    LaunchedEffect(crudOperationState) {
+        when (val state = crudOperationState) {
+            is CrudOperationState.Success -> {
+                Log.d("RecordsScreen", "✅ Operation successful: ${state.message}")
+                snackbarHostState.showSnackbar(
+                    message = state.message,
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.clearCrudOperationState()
+            }
+            is CrudOperationState.Error -> {
+                Log.e("RecordsScreen", "❌ Operation failed: ${state.message}")
+                snackbarHostState.showSnackbar(
+                    message = "Error: ${state.message}",
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.clearCrudOperationState()
+            }
+            else -> { /* Idle or Loading - no action needed */ }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
         // Top bar
         TopAppBar(
             title = {
@@ -138,5 +169,6 @@ fun RecordsScreen(
                 }
             }
         }
+    }
     }
 }

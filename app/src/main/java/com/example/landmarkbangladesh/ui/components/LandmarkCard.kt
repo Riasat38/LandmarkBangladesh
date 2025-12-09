@@ -14,10 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
 import com.example.landmarkbangladesh.data.model.Landmark
 import kotlin.math.roundToInt
 
@@ -35,16 +37,19 @@ fun LandmarkCard(
 
     var offsetX by remember { mutableFloatStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // Handle swipe actions
+    // Handle swipe actions - auto-trigger with confirmation
     val handleSwipeEnd = { offset: Float ->
         when {
             offset > swipeThreshold && onEdit != null -> {
+                // Auto-trigger edit action
                 onEdit()
                 offsetX = 0f
             }
             offset < -swipeThreshold && onDelete != null -> {
-                onDelete()
+                // Show delete confirmation dialog
+                showDeleteDialog = true
                 offsetX = 0f
             }
             else -> {
@@ -52,6 +57,44 @@ fun LandmarkCard(
             }
         }
         isDragging = false
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text("Delete Landmark?")
+            },
+            text = {
+                Text("Are you sure you want to delete \"${landmark.title}\"? This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Box(
@@ -146,44 +189,51 @@ fun LandmarkCard(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // Image placeholder with category-based color
-                Box(
+                // Image from API with loading and error states
+                SubcomposeAsyncImage(
+                    model = landmark.image,
+                    contentDescription = landmark.title,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
                         .clip(RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = when (landmark.category.lowercase()) {
-                            "natural heritage", "natural" -> MaterialTheme.colorScheme.primaryContainer
-                            "beach", "island" -> MaterialTheme.colorScheme.tertiaryContainer
-                            "historical" -> MaterialTheme.colorScheme.secondaryContainer
-                            "religious" -> MaterialTheme.colorScheme.errorContainer
-                            "archaeological" -> MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
-                            else -> MaterialTheme.colorScheme.surfaceVariant
-                        },
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Column(
+                    contentScale = ContentScale.Crop,
+                    loading = {
+                        Box(
                             modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "🏛️",
-                                style = MaterialTheme.typography.displayMedium
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = landmark.category,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp)
                             )
                         }
+                    },
+                    error = {
+                        // Fallback UI when image fails to load
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "🏛️",
+                                    style = MaterialTheme.typography.displayMedium
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Image not available",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
-                }
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
