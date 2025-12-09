@@ -91,17 +91,17 @@ fun FormScreen(
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
-            Log.d("FormScreen", "🖼️ Gallery result: URI = $uri")
+            Log.d("FormScreen", " Gallery result: URI = $uri")
             uri?.let {
-                Log.d("FormScreen", "✅ Image selected from gallery: $it")
+                Log.d("FormScreen", " Image selected from gallery: $it")
                 selectedImageUri = it
                 processImage(context, it) { processedUri ->
                     resizedImageUri = processedUri
                     isImageProcessing = false
-                    Log.d("FormScreen", "🖼️ Gallery image processing completed")
+                    Log.d("FormScreen", " Gallery image processing completed")
                 }
             } ?: run {
-                Log.w("FormScreen", "⚠️ No image selected from gallery")
+                Log.w("FormScreen", " No image selected from gallery")
                 isImageProcessing = false
             }
         }
@@ -112,17 +112,17 @@ fun FormScreen(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
-            Log.d("FormScreen", "📷 Camera result: success = $success")
+            Log.d("FormScreen", " Camera result: success = $success")
             if (success && currentPhotoUri != null) {
-                Log.d("FormScreen", "✅ Photo captured successfully: ${currentPhotoUri}")
+                Log.d("FormScreen", " Photo captured successfully: ${currentPhotoUri}")
                 selectedImageUri = currentPhotoUri
                 processImage(context, currentPhotoUri!!) { processedUri ->
                     resizedImageUri = processedUri
                     isImageProcessing = false
-                    Log.d("FormScreen", "🖼️ Image processing completed")
+                    Log.d("FormScreen", " Image processing completed")
                 }
             } else {
-                Log.w("FormScreen", "⚠️ Camera capture failed or cancelled")
+                Log.w("FormScreen", " Camera capture failed or cancelled")
                 isImageProcessing = false
             }
         }
@@ -140,13 +140,13 @@ fun FormScreen(
     LaunchedEffect(crudOperationState) {
         when (val currentState = crudOperationState) {
             is CrudOperationState.Success -> {
-                Log.d("FormScreen", "🎉 Landmark operation successful!")
+                Log.d("FormScreen", " Landmark operation successful!")
 
                 // Show success snackbar
                 val message = if (landmark == null) {
-                    "✅ Landmark created successfully and marked on map!"
+                    " Landmark created successfully and marked on map!"
                 } else {
-                    "✅ Landmark updated successfully!"
+                    " Landmark updated successfully!"
                 }
 
                 snackbarHostState.showSnackbar(
@@ -162,7 +162,7 @@ fun FormScreen(
 
                 // Navigate to records screen if callback provided (for new landmarks)
                 if (landmark == null && onSuccessNavigation != null) {
-                    Log.d("FormScreen", "📱 Navigating to records screen...")
+                    Log.d("FormScreen", "Navigating to records screen...")
                     onSuccessNavigation()
                 } else {
                     // Navigate back for edit operations

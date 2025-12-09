@@ -41,9 +41,8 @@ fun OverviewScreen(
     // Show snackbar when landmarks are loaded successfully
     LaunchedEffect(uiState) {
         if (uiState is LandmarkUiState.Success) {
-            val landmarkCount = (uiState as LandmarkUiState.Success).landmarks.size
             snackbarHostState.showSnackbar(
-                message = "Map Successfully Loaded with $landmarkCount landmark${if (landmarkCount != 1) "s" else ""}",
+                message = "Map Successfully Loaded  ",
                 duration = SnackbarDuration.Short
             )
         }

@@ -80,7 +80,7 @@ fun RecordsScreen(
                             )
                         ) {
                             Text(
-                                text = "📍 Found ${currentState.landmarks.size} landmarks",
+                                text = " Found ${currentState.landmarks.size} landmarks",
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(16.dp),
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
