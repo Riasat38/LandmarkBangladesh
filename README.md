@@ -556,6 +556,9 @@ The app includes several optimizations:
 - GPS detection may fail indoors or with poor signal
 - Large images (>5MB) may take time to process
 - Delete requires internet connection (no offline queue)
+- Problem with edit landmark cards, file edit
+- some isssue with auto location detection
+
 
 ---
 
@@ -587,7 +590,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Developer
 
-**Ahmed**  
+**Ahmed Riasat**  
 Android Developer  
 Landmark Bangladesh Project  
 
@@ -603,29 +606,6 @@ Landmark Bangladesh Project
 - **JetBrains** - Kotlin language
 - **Google** - Android platform and Jetpack libraries
 
----
-
-## 📞 Support
-
-For issues, questions, or contributions:
-
-1. **Issues**: Open an issue on GitHub
-2. **Email**: your.email@example.com
-3. **Documentation**: See `SCREENS_DOCUMENTATION.md` for detailed technical docs
-
----
-
-## 📸 Screenshots
-
-> Add screenshots here showing:
-> - Map view with markers
-> - List view with cards
-> - Add landmark form
-> - Edit landmark form
-> - Swipe gestures in action
-> - Delete confirmation dialog
-
----
 
 ## 🎯 Quick Start Summary
 
@@ -656,5 +636,4 @@ git clone https://github.com/yourusername/LandmarkBangladesh.git
 
 ---
 
-Made with ❤️ for Bangladesh 🇧🇩
 

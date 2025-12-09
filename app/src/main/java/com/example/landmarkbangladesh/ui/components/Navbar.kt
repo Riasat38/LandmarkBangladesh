@@ -7,7 +7,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,11 +26,9 @@ fun Navbar(navController: NavController) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     NavigationBar(
-        containerColor = Color.White,
-        contentColor = Color.Black,
         modifier = Modifier.fillMaxWidth()
     ) {
-        items.forEachIndexed { index, item ->
+        items.forEach { item ->
             NavigationBarItem(
                 icon = {
                     Icon(
