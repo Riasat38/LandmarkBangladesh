@@ -8,5 +8,4 @@ data class Landmark(
     val image: String,
     val latitude: Double,
     val longitude: Double,
-    val category: String
 )

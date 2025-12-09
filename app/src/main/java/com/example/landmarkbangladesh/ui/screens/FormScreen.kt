@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.LocationOn
@@ -30,6 +29,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.landmarkbangladesh.data.model.Landmark
+import com.example.landmarkbangladesh.ui.components.AppTopBar
 import com.example.landmarkbangladesh.ui.viewmodel.CrudOperationState
 import com.example.landmarkbangladesh.ui.viewmodel.LandmarkViewModel
 import com.example.landmarkbangladesh.utils.ImageUtils
@@ -84,7 +84,6 @@ fun FormScreen(
             }
         }
     )
-
 
 
     // Image launchers
@@ -174,33 +173,21 @@ fun FormScreen(
     }
 
     Scaffold(
+        topBar = {
+            AppTopBar(
+                title = if (landmark == null) "Add New Landmark" else "Edit Landmark",
+                showBackButton = true,
+                onBackClick = onNavigateBack
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-        // Top App Bar
-        TopAppBar(
-            title = {
-                Text(
-                    text = if (landmark == null) "Add New Landmark" else "Edit Landmark",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            }
-        )
-
         // Form Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -214,7 +201,7 @@ fun FormScreen(
                 enabled = crudOperationState !is CrudOperationState.Loading
             )
 
-            // GPS Coordinates Section
+            // GPS Coordinates
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -268,7 +255,6 @@ fun FormScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Latitude Field
                     OutlinedTextField(
                         value = latitude,
                         onValueChange = { latitude = it },
@@ -280,7 +266,6 @@ fun FormScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Longitude Field
                     OutlinedTextField(
                         value = longitude,
                         onValueChange = { longitude = it },
@@ -315,7 +300,7 @@ fun FormScreen(
                 }
             }
 
-            // Image Selection Section
+            // Image
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -391,14 +376,14 @@ fun FormScreen(
                                     val newPhotoFile = File(context.cacheDir, "camera_photo_${System.currentTimeMillis()}.jpg")
                                     val newPhotoUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", newPhotoFile)
 
-                                    Log.d("FormScreen", "📁 Created photo file: ${newPhotoFile.absolutePath}")
-                                    Log.d("FormScreen", "🔗 Created photo URI: $newPhotoUri")
+                                    Log.d("FormScreen", " Created photo file: ${newPhotoFile.absolutePath}")
+                                    Log.d("FormScreen", " Created photo URI: $newPhotoUri")
 
                                     // Store the URI and launch camera
                                     currentPhotoUri = newPhotoUri
                                     cameraLauncher.launch(newPhotoUri)
                                 } catch (e: Exception) {
-                                    Log.e("FormScreen", "❌ Error launching camera: ${e.message}", e)
+                                    Log.e("FormScreen", " Error launching camera: ${e.message}", e)
                                     isImageProcessing = false
                                 }
                             },
@@ -487,19 +472,19 @@ fun FormScreen(
                     val lon = longitude.toDoubleOrNull()
                     val imageToSubmit = resizedImageUri ?: selectedImageUri
 
-                    Log.d("FormScreen", "🚀 Submit button clicked")
-                    Log.d("FormScreen", "📝 Title: $title")
-                    Log.d("FormScreen", "📍 Coordinates: ($lat, $lon)")
-                    Log.d("FormScreen", "🖼️ Selected image URI: $selectedImageUri")
-                    Log.d("FormScreen", "📏 Resized image URI: $resizedImageUri")
-                    Log.d("FormScreen", "📤 Image to submit: $imageToSubmit")
+                    Log.d("FormScreen", " Submit button clicked")
+                    Log.d("FormScreen", " Title: $title")
+                    Log.d("FormScreen", " Coordinates: ($lat, $lon)")
+                    Log.d("FormScreen", "Selected image URI: $selectedImageUri")
+                    Log.d("FormScreen", " Resized image URI: $resizedImageUri")
+                    Log.d("FormScreen", " Image to submit: $imageToSubmit")
 
                     if (title.isNotBlank() && lat != null && lon != null) {
                         if (landmark == null) {
-                            Log.d("FormScreen", "🆕 Creating new landmark...")
+                            Log.d("FormScreen", " Creating new landmark...")
                             viewModel.createLandmark(title, lat, lon, imageToSubmit, context)
                         } else {
-                            Log.d("FormScreen", "✏️ Updating existing landmark...")
+                            Log.d("FormScreen", " Updating existing landmark...")
                             viewModel.updateLandmark(
                                 landmark.id,
                                 title,
@@ -510,7 +495,7 @@ fun FormScreen(
                             )
                         }
                     } else {
-                        Log.w("FormScreen", "⚠️ Form validation failed")
+                        Log.w("FormScreen", "️ Form validation failed")
                         Log.w("FormScreen", "Title empty: ${title.isBlank()}")
                         Log.w("FormScreen", "Invalid coordinates: lat=$lat, lon=$lon")
                     }
@@ -538,7 +523,6 @@ fun FormScreen(
         }
     }
 }
-}
 
 // Helper functions
 private suspend fun detectCurrentLocation(
@@ -563,14 +547,14 @@ private fun processImage(
     imageUri: Uri,
     callback: (Uri?) -> Unit
 ) {
-    Log.d("FormScreen", "🖼️ Starting image processing for URI: $imageUri")
+    Log.d("FormScreen", " Starting image processing for URI: $imageUri")
 
     kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
         try {
             // Check if the original URI is accessible
             val inputStream = context.contentResolver.openInputStream(imageUri)
             if (inputStream == null) {
-                Log.e("FormScreen", "❌ Cannot access image URI: $imageUri")
+                Log.e("FormScreen", " Cannot access image URI: $imageUri")
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                     callback(null)
                 }
@@ -578,22 +562,22 @@ private fun processImage(
             }
             inputStream.close()
 
-            Log.d("FormScreen", "✅ Original image URI is accessible")
+            Log.d("FormScreen", " Original image URI is accessible")
 
             // Resize the image
             val resizedUri = ImageUtils.resizeImage(context, imageUri)
 
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                 if (resizedUri != null) {
-                    Log.d("FormScreen", "✅ Image resized successfully to: $resizedUri")
+                    Log.d("FormScreen", "Image resized successfully to: $resizedUri")
                     callback(resizedUri)
                 } else {
-                    Log.w("FormScreen", "⚠️ Image resize failed, using original URI: $imageUri")
+                    Log.w("FormScreen", "️ Image resize failed, using original URI: $imageUri")
                     callback(imageUri) // Fallback to original if resize fails
                 }
             }
         } catch (e: Exception) {
-            Log.e("FormScreen", "❌ Error processing image: ${e.message}", e)
+            Log.e("FormScreen", " Error processing image: ${e.message}", e)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                 // Fallback to original URI if processing fails
                 callback(imageUri)

@@ -8,12 +8,8 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
-
-
     @GET("api.php")
     suspend fun getLandmarks(): Response<List<LandmarkResponse>>
-
-
     @Multipart
     @POST("api.php")
     suspend fun createLandmark(
@@ -22,7 +18,6 @@ interface ApiService {
         @Part("lon") longitude: RequestBody,
         @Part image: MultipartBody.Part?
     ): Response<ApiResponse>
-
     @Multipart
     @PUT("api.php")
     suspend fun updateLandmark(
@@ -33,10 +28,9 @@ interface ApiService {
         @Part image: MultipartBody.Part?
     ): Response<ApiResponse>
 
-
-    @HTTP(method = "DELETE", path = "api.php", hasBody = true)
-    @FormUrlEncoded
+    // Delete (DELETE): Remove a landmark
+    @DELETE("api.php")
     suspend fun deleteLandmark(
-        @Field("id") id: Int
+        @Query("id") id: Int
     ): Response<ApiResponse>
 }

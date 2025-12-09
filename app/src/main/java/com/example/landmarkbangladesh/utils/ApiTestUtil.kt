@@ -68,8 +68,7 @@ object ApiTestUtil {
                 image = jsonObject.optString("image", jsonObject.optString("image_url", jsonObject.optString("photo", ""))),
                 latitude = jsonObject.optDouble("latitude", jsonObject.optDouble("lat", 0.0)),
                 longitude = jsonObject.optDouble("longitude", jsonObject.optDouble("lng", 0.0)),
-                category = jsonObject.optString("category", jsonObject.optString("type", "General"))
-            )
+                )
         } catch (e: Exception) {
             Log.e("ApiTestUtil", "Error parsing landmark: ${e.message}")
             null
@@ -85,8 +84,7 @@ object ApiTestUtil {
                 description = "The largest mangrove forest in the world and a UNESCO World Heritage Site.",
                 image = "https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Sundarbans",
                 latitude = 21.9497,
-                longitude = 89.1833,
-                category = "Natural Heritage"
+                longitude = 89.1833
             ),
             Landmark(
                 id = 2,
@@ -95,8 +93,7 @@ object ApiTestUtil {
                 description = "The world's longest natural sea beach stretching 120 kilometers.",
                 image = "https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Cox's+Bazar",
                 latitude = 21.4272,
-                longitude = 92.0058,
-                category = "Beach"
+                longitude = 92.0058
             ),
             Landmark(
                 id = 3,
@@ -105,8 +102,7 @@ object ApiTestUtil {
                 description = "A 17th-century Mughal fort complex built during the reign of Emperor Aurangzeb.",
                 image = "https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Lalbagh+Fort",
                 latitude = 23.7197,
-                longitude = 90.3875,
-                category = "Historical"
+                longitude = 90.3875
             ),
             Landmark(
                 id = 4,
@@ -115,8 +111,7 @@ object ApiTestUtil {
                 description = "A UNESCO World Heritage Site featuring 15th-century mosque architecture.",
                 image = "https://via.placeholder.com/400x300/9C27B0/FFFFFF?text=Shat+Gombuj",
                 latitude = 22.6833,
-                longitude = 89.7833,
-                category = "Religious"
+                longitude = 89.7833
             ),
             Landmark(
                 id = 5,
@@ -125,8 +120,7 @@ object ApiTestUtil {
                 description = "Ancient Buddhist monastery ruins dating back to the 8th century.",
                 image = "https://via.placeholder.com/400x300/795548/FFFFFF?text=Paharpur",
                 latitude = 25.0342,
-                longitude = 88.9769,
-                category = "Archaeological"
+                longitude = 88.9769
             )
         )
     }

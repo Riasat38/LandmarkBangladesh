@@ -39,11 +39,11 @@ fun LandmarkCard(
     var isDragging by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // Handle swipe actions - auto-trigger with confirmation
+    // Handle swipe actions
     val handleSwipeEnd = { offset: Float ->
         when {
             offset > swipeThreshold && onEdit != null -> {
-                // Auto-trigger edit action
+
                 onEdit()
                 offsetX = 0f
             }
@@ -137,7 +137,7 @@ fun LandmarkCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Right side - Delete action (swipe left to reveal)
+            // Right side - Delete action Swipe
             if (onDelete != null) {
                 Box(
                     modifier = Modifier
@@ -260,35 +260,6 @@ fun LandmarkCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Category chip
-                if (landmark.category.isNotBlank()) {
-                    AssistChip(
-                        onClick = { },
-                        label = {
-                            Text(
-                                text = landmark.category,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    )
-                }
-
-                // Swipe hint text
-                if (onEdit != null || onDelete != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = when {
-                            onEdit != null && onDelete != null -> "← Swipe left to delete • Swipe right to edit →"
-                            onEdit != null -> "Swipe right to edit →"
-                            onDelete != null -> "← Swipe left to delete"
-                            else -> ""
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                }
             }
         }
     }

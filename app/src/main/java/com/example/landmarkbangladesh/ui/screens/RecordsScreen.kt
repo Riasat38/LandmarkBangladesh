@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.landmarkbangladesh.ui.components.AppTopBar
 import com.example.landmarkbangladesh.ui.components.LandmarkCard
 import com.example.landmarkbangladesh.ui.viewmodel.CrudOperationState
 import com.example.landmarkbangladesh.ui.viewmodel.LandmarkUiState
@@ -26,7 +27,7 @@ fun RecordsScreen(
 
     // Refresh data when screen is composed
     LaunchedEffect(Unit) {
-        Log.d("RecordsScreen", "🔄 Screen loaded, refreshing landmark data...")
+        Log.d("RecordsScreen", " Screen loaded, refreshing landmark data...")
         viewModel.loadLandmarks()
     }
 
@@ -34,7 +35,7 @@ fun RecordsScreen(
     LaunchedEffect(crudOperationState) {
         when (val state = crudOperationState) {
             is CrudOperationState.Success -> {
-                Log.d("RecordsScreen", "✅ Operation successful: ${state.message}")
+                Log.d("RecordsScreen", " Operation successful: ${state.message}")
                 snackbarHostState.showSnackbar(
                     message = state.message,
                     duration = SnackbarDuration.Short
@@ -42,7 +43,7 @@ fun RecordsScreen(
                 viewModel.clearCrudOperationState()
             }
             is CrudOperationState.Error -> {
-                Log.e("RecordsScreen", "❌ Operation failed: ${state.message}")
+                Log.e("RecordsScreen", " Operation failed: ${state.message}")
                 snackbarHostState.showSnackbar(
                     message = "Error: ${state.message}",
                     duration = SnackbarDuration.Long
@@ -54,27 +55,19 @@ fun RecordsScreen(
     }
 
     Scaffold(
+        topBar = {
+            AppTopBar(
+                title = "Landmarks of Bangladesh"
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-        // Top bar
-        TopAppBar(
-            title = {
-                Text(
-                    text = "Landmarks of Bangladesh",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-            }
-        )
-
         when (val currentState = uiState) {
             is LandmarkUiState.Loading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -98,7 +91,9 @@ fun RecordsScreen(
 
             is LandmarkUiState.Success -> {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
                     item {
@@ -141,7 +136,9 @@ fun RecordsScreen(
 
             is LandmarkUiState.Error -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -169,6 +166,5 @@ fun RecordsScreen(
                 }
             }
         }
-    }
     }
 }

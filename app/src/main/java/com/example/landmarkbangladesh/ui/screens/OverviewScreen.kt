@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.landmarkbangladesh.ui.components.AppTopBar
 import com.example.landmarkbangladesh.ui.viewmodel.LandmarkUiState
 import com.example.landmarkbangladesh.ui.viewmodel.LandmarkViewModel
 import org.osmdroid.api.IMapController
@@ -34,7 +35,7 @@ fun OverviewScreen(
     // Initialize OSMDroid configuration and refresh data
     LaunchedEffect(Unit) {
         Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", 0))
-        Log.d("OverviewScreen", "🔄 Screen loaded, refreshing landmark data for map...")
+        Log.d("OverviewScreen", "Screen loaded, refreshing landmark data for map...")
         viewModel.loadLandmarks()
     }
 
@@ -49,37 +50,29 @@ fun OverviewScreen(
     }
 
     Scaffold(
+        topBar = {
+            AppTopBar(
+                title = "Landmarks Map Overview",
+                actions = {
+                    IconButton(
+                        onClick = {
+                            Log.d("OverviewScreen", "Refresh button clicked")
+                            viewModel.loadLandmarks()
+                        }
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-        // Top bar
-        TopAppBar(
-            title = {
-                Text(
-                    text = "Landmarks Map Overview",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-            },
-            actions = {
-                IconButton(
-                    onClick = {
-                        Log.d("OverviewScreen", "Refresh button clicked")
-                        viewModel.loadLandmarks()
-                    }
-                ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                }
-            }
-        )
-
         when (val currentState = uiState) {
             is LandmarkUiState.Loading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -102,6 +95,7 @@ fun OverviewScreen(
                 AndroidView(
                     modifier = Modifier
                         .fillMaxSize()
+                        .padding(paddingValues)
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 16.dp),
                     factory = { context ->
@@ -124,8 +118,7 @@ fun OverviewScreen(
                                     position = GeoPoint(landmark.latitude, landmark.longitude)
                                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                     title = landmark.title
-                                    snippet = "${landmark.location}\n${landmark.category}"
-
+                                    snippet = landmark.location
                                 }
 
                                 overlays.add(marker)
@@ -149,7 +142,7 @@ fun OverviewScreen(
                                 position = GeoPoint(landmark.latitude, landmark.longitude)
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                 title = landmark.title
-                                snippet = "${landmark.location}\n${landmark.category}"
+                                snippet = landmark.location
                             }
 
                             mapView.overlays.add(marker)
@@ -163,7 +156,9 @@ fun OverviewScreen(
 
             is LandmarkUiState.Error -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -191,6 +186,5 @@ fun OverviewScreen(
                 }
             }
         }
-    }
     }
 }

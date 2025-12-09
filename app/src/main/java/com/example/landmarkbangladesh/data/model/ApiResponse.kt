@@ -22,7 +22,7 @@ data class CreateLandmarkRequest(
     val title: String,
     val lat: Double,
     val lon: Double
-    // Note: image will be handled as multipart file upload
+
 )
 
 data class UpdateLandmarkRequest(
@@ -30,7 +30,7 @@ data class UpdateLandmarkRequest(
     val title: String? = null,
     val lat: Double? = null,
     val lon: Double? = null
-    // Note: image will be handled as multipart file upload
+
 )
 
 data class DeleteLandmarkRequest(

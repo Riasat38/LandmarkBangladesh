@@ -41,41 +41,34 @@ class LandmarkRepository {
         apiService = retrofit.create(ApiService::class.java)
     }
 
-    // Read (GET): Retrieve all landmarks
+    //GET all landmarks
     suspend fun getLandmarks(): Result<List<Landmark>> = withContext(Dispatchers.IO) {
         try {
-            Log.d("LandmarkRepository", "🌐 Fetching landmarks from API...")
+            Log.d("LandmarkRepository", " Fetching landmarks from API...")
             val response = apiService.getLandmarks()
 
             if (response.isSuccessful) {
                 val landmarkResponses = response.body() ?: emptyList()
-                Log.d("LandmarkRepository", "✅ Successfully received ${landmarkResponses.size} landmarks from API")
+                Log.d("LandmarkRepository", " Successfully received ${landmarkResponses.size} landmarks from API")
 
                 val landmarks = landmarkResponses.mapNotNull { it.toLandmark() }
-                Log.d("LandmarkRepository", "📊 Parsed ${landmarks.size} valid landmarks")
+                Log.d("LandmarkRepository", " Parsed ${landmarks.size} valid landmarks")
 
-                if (landmarks.isNotEmpty()) {
-                    landmarks.forEachIndexed { index, landmark ->
-                        Log.d("LandmarkRepository", "  Landmark ${index + 1}: ${landmark.title} at (${landmark.latitude}, ${landmark.longitude})")
-                    }
-                    Result.success(landmarks)
-                } else {
-                    Log.w("LandmarkRepository", "⚠️ No valid landmarks parsed, using fallback data")
-                    Result.success(getTestLandmarks())
+                landmarks.forEachIndexed { index, landmark ->
+                    Log.d("LandmarkRepository", "  Landmark ${index + 1}: ${landmark.title} at (${landmark.latitude}, ${landmark.longitude})")
                 }
+                Result.success(landmarks)
             } else {
-                Log.e("LandmarkRepository", "❌ API error: ${response.code()} - ${response.message()}")
-                Log.d("LandmarkRepository", "Using fallback test data")
-                Result.success(getTestLandmarks())
+                Log.e("LandmarkRepository", " API error: ${response.code()} - ${response.message()}")
+                Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
             }
         } catch (e: Exception) {
-            Log.e("LandmarkRepository", "❌ Network error: ${e.message}", e)
-            Log.d("LandmarkRepository", "Using fallback test data")
-            Result.success(getTestLandmarks())
+            Log.e("LandmarkRepository", " Network error: ${e.message}", e)
+            Result.failure(e)
         }
     }
 
-    // Create (POST): Submit a new landmark
+    //POST  new landmark
     suspend fun createLandmark(
         title: String,
         latitude: Double,
@@ -84,8 +77,8 @@ class LandmarkRepository {
         context: Context? = null
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         try {
-            Log.d("LandmarkRepository", "🆕 Creating new landmark: $title at ($latitude, $longitude)")
-            Log.d("LandmarkRepository", "📷 Image URI provided: ${imageUri != null}")
+            Log.d("LandmarkRepository", " Creating new landmark: $title at ($latitude, $longitude)")
+            Log.d("LandmarkRepository", " Image URI provided: ${imageUri != null}")
 
             val titleBody = title.toRequestBody("text/plain".toMediaTypeOrNull())
             val latBody = latitude.toString().toRequestBody("text/plain".toMediaTypeOrNull())
@@ -93,34 +86,34 @@ class LandmarkRepository {
 
             var imagePart: MultipartBody.Part? = null
             if (imageUri != null && context != null) {
-                Log.d("LandmarkRepository", "🔄 Preparing image for upload...")
+                Log.d("LandmarkRepository", " Preparing image for upload...")
                 imagePart = prepareImagePart(imageUri, context)
                 if (imagePart != null) {
-                    Log.d("LandmarkRepository", "✅ Image part prepared successfully")
+                    Log.d("LandmarkRepository", " Image part prepared successfully")
                 } else {
-                    Log.w("LandmarkRepository", "⚠️ Failed to prepare image part, continuing without image")
+                    Log.w("LandmarkRepository", " Failed to prepare image part, continuing without image")
                 }
             } else {
-                Log.d("LandmarkRepository", "ℹ️ No image provided for this landmark")
+                Log.d("LandmarkRepository", " No image provided for this landmark")
             }
 
-            Log.d("LandmarkRepository", "🌐 Sending POST request to API...")
+            Log.d("LandmarkRepository", " Sending POST request to API...")
             val response = apiService.createLandmark(titleBody, latBody, lonBody, imagePart)
 
             if (response.isSuccessful) {
                 val result = response.body()
-                Log.d("LandmarkRepository", "✅ Successfully created landmark")
-                Log.d("LandmarkRepository", "📋 API Response: ${result?.status} - ${result?.message}")
+                Log.d("LandmarkRepository", " Successfully created landmark")
+                Log.d("LandmarkRepository", " API Response: ${result?.status} - ${result?.message}")
                 Result.success(result ?: ApiResponse(status = "success"))
             } else {
                 val errorBody = response.errorBody()?.string()
-                Log.e("LandmarkRepository", "❌ Failed to create landmark: HTTP ${response.code()}")
-                Log.e("LandmarkRepository", "📋 Error response: ${response.message()}")
-                Log.e("LandmarkRepository", "📋 Error body: $errorBody")
+                Log.e("LandmarkRepository", " Failed to create landmark: HTTP ${response.code()}")
+                Log.e("LandmarkRepository", " Error response: ${response.message()}")
+                Log.e("LandmarkRepository", " Error body: $errorBody")
                 Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
             }
         } catch (e: Exception) {
-            Log.e("LandmarkRepository", "❌ Error creating landmark: ${e.message}", e)
+            Log.e("LandmarkRepository", " Error creating landmark: ${e.message}", e)
             e.printStackTrace()
             Result.failure(e)
         }
@@ -136,7 +129,7 @@ class LandmarkRepository {
         context: Context? = null
     ): Result<ApiResponse> = withContext(Dispatchers.IO) {
         try {
-            Log.d("LandmarkRepository", "✏️ Updating landmark ID: $id")
+            Log.d("LandmarkRepository", "✏ Updating landmark ID: $id")
 
             val idBody = id.toString().toRequestBody("text/plain".toMediaTypeOrNull())
             val titleBody = title?.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -152,14 +145,14 @@ class LandmarkRepository {
 
             if (response.isSuccessful) {
                 val result = response.body()
-                Log.d("LandmarkRepository", "✅ Successfully updated landmark: ${result?.message}")
+                Log.d("LandmarkRepository", " Successfully updated landmark: ${result?.message}")
                 Result.success(result ?: ApiResponse(status = "success"))
             } else {
-                Log.e("LandmarkRepository", "❌ Failed to update landmark: ${response.code()}")
+                Log.e("LandmarkRepository", " Failed to update landmark: ${response.code()}")
                 Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
             }
         } catch (e: Exception) {
-            Log.e("LandmarkRepository", "❌ Error updating landmark: ${e.message}", e)
+            Log.e("LandmarkRepository", " Error updating landmark: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -168,19 +161,24 @@ class LandmarkRepository {
     suspend fun deleteLandmark(id: Int): Result<ApiResponse> = withContext(Dispatchers.IO) {
         try {
             Log.d("LandmarkRepository", "🗑️ Deleting landmark ID: $id")
+            Log.d("LandmarkRepository", "📡 DELETE Request URL: https://labs.anontech.info/cse489/t3/api.php?id=$id")
 
             val response = apiService.deleteLandmark(id)
 
             if (response.isSuccessful) {
                 val result = response.body()
-                Log.d("LandmarkRepository", "✅ Successfully deleted landmark: ${result?.message}")
+                Log.d("LandmarkRepository", " Successfully deleted landmark: ${result?.message}")
                 Result.success(result ?: ApiResponse(status = "success"))
             } else {
-                Log.e("LandmarkRepository", "❌ Failed to delete landmark: ${response.code()}")
-                Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
+                val errorBody = response.errorBody()?.string()
+                Log.e("LandmarkRepository", " Failed to delete landmark")
+                Log.e("LandmarkRepository", "   HTTP Status: ${response.code()}")
+                Log.e("LandmarkRepository", "   Error Message: ${response.message()}")
+                Log.e("LandmarkRepository", "   Error Body: $errorBody")
+                Result.failure(Exception("Failed to delete: HTTP ${response.code()} - ${errorBody ?: response.message()}"))
             }
         } catch (e: Exception) {
-            Log.e("LandmarkRepository", "❌ Error deleting landmark: ${e.message}", e)
+            Log.e("LandmarkRepository", " Error deleting landmark: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -198,7 +196,7 @@ class LandmarkRepository {
             // Open input stream
             val inputStream = contentResolver.openInputStream(imageUri)
             if (inputStream == null) {
-                Log.e("LandmarkRepository", "❌ Cannot open input stream for URI: $imageUri")
+                Log.e("LandmarkRepository", " Cannot open input stream for URI: $imageUri")
                 return null
             }
 
@@ -212,22 +210,22 @@ class LandmarkRepository {
             val fileName = "upload_image_${System.currentTimeMillis()}.$extension"
             val file = File(context.cacheDir, fileName)
 
-            Log.d("LandmarkRepository", "💾 Creating temp file: ${file.absolutePath}")
+            Log.d("LandmarkRepository", " Creating temp file: ${file.absolutePath}")
 
             // Copy stream to file
             file.outputStream().use { outputStream ->
                 val bytesWritten = inputStream.copyTo(outputStream)
-                Log.d("LandmarkRepository", "📝 Wrote $bytesWritten bytes to temp file")
+                Log.d("LandmarkRepository", " Wrote $bytesWritten bytes to temp file")
             }
             inputStream.close()
 
             // Verify file was created and has content
             if (!file.exists() || file.length() == 0L) {
-                Log.e("LandmarkRepository", "❌ Temp file creation failed or file is empty")
+                Log.e("LandmarkRepository", " Temp file creation failed or file is empty")
                 return null
             }
 
-            Log.d("LandmarkRepository", "✅ Temp file created successfully: ${file.length()} bytes")
+            Log.d("LandmarkRepository", " Temp file created successfully: ${file.length()} bytes")
 
             // Create request body with proper MIME type
             val mediaType = when (extension) {
@@ -239,11 +237,11 @@ class LandmarkRepository {
             val requestFile = file.asRequestBody(mediaType)
             val imagePart = MultipartBody.Part.createFormData("image", fileName, requestFile)
 
-            Log.d("LandmarkRepository", "🚀 Image part prepared successfully for upload")
+            Log.d("LandmarkRepository", " Image part prepared successfully for upload")
             return imagePart
 
         } catch (e: Exception) {
-            Log.e("LandmarkRepository", "❌ Error preparing image part: ${e.message}", e)
+            Log.e("LandmarkRepository", " Error preparing image part: ${e.message}", e)
             e.printStackTrace()
             null
         }
@@ -261,7 +259,7 @@ class LandmarkRepository {
                 }
             } ?: ""
 
-            Log.d("LandmarkRepository", "📷 Image URL for '${this.title}': $imageUrl")
+            Log.d("LandmarkRepository", " Image URL for '${this.title}': $imageUrl")
 
             Landmark(
                 id = this.id ?: 0,
@@ -271,96 +269,10 @@ class LandmarkRepository {
                 image = imageUrl,
                 latitude = this.lat ?: 0.0,
                 longitude = this.lon ?: 0.0,
-                category = "Bangladesh Landmark"
             )
         } catch (e: Exception) {
             Log.e("LandmarkRepository", "Error converting LandmarkResponse: ${e.message}")
             null
         }
-    }
-
-    private fun getTestLandmarks(): List<Landmark> {
-        return listOf(
-            Landmark(
-                id = 1,
-                title = "Sundarbans Mangrove Forest",
-                location = "Khulna Division, Bangladesh",
-                description = "The largest mangrove forest in the world and a UNESCO World Heritage Site.",
-                image = "https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Sundarbans",
-                latitude = 21.9497,
-                longitude = 89.1833,
-                category = "Natural Heritage"
-            ),
-            Landmark(
-                id = 2,
-                title = "Cox's Bazar Beach",
-                location = "Cox's Bazar, Chittagong Division",
-                description = "The world's longest natural sea beach stretching 120 kilometers.",
-                image = "https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Cox's+Bazar",
-                latitude = 21.4272,
-                longitude = 92.0058,
-                category = "Beach"
-            ),
-            Landmark(
-                id = 3,
-                title = "Lalbagh Fort",
-                location = "Old Dhaka, Dhaka",
-                description = "A 17th-century Mughal fort complex built during the reign of Emperor Aurangzeb.",
-                image = "https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Lalbagh+Fort",
-                latitude = 23.7197,
-                longitude = 90.3875,
-                category = "Historical"
-            ),
-            Landmark(
-                id = 4,
-                title = "Shat Gombuj Mosque",
-                location = "Bagerhat, Khulna Division",
-                description = "A UNESCO World Heritage Site featuring 15th-century mosque architecture.",
-                image = "https://via.placeholder.com/400x300/9C27B0/FFFFFF?text=Shat+Gombuj",
-                latitude = 22.6833,
-                longitude = 89.7833,
-                category = "Religious"
-            ),
-            Landmark(
-                id = 5,
-                title = "Paharpur Buddhist Vihara",
-                location = "Naogaon District, Rajshahi Division",
-                description = "Ancient Buddhist monastery ruins dating back to the 8th century.",
-                image = "https://via.placeholder.com/400x300/795548/FFFFFF?text=Paharpur",
-                latitude = 25.0342,
-                longitude = 88.9769,
-                category = "Archaeological"
-            ),
-            Landmark(
-                id = 6,
-                title = "Bandarban Hill Tracts",
-                location = "Bandarban, Chittagong Hill Tracts",
-                description = "Scenic hill district with beautiful landscapes and tribal culture.",
-                image = "https://via.placeholder.com/400x300/8BC34A/FFFFFF?text=Bandarban",
-                latitude = 22.1953,
-                longitude = 92.2207,
-                category = "Natural"
-            ),
-            Landmark(
-                id = 7,
-                title = "Ahsan Manzil",
-                location = "Old Dhaka, Dhaka",
-                description = "The Pink Palace - former residential palace of the Nawab of Dhaka.",
-                image = "https://via.placeholder.com/400x300/E91E63/FFFFFF?text=Ahsan+Manzil",
-                latitude = 23.7085,
-                longitude = 90.4068,
-                category = "Historical"
-            ),
-            Landmark(
-                id = 8,
-                title = "Saint Martin's Island",
-                location = "Cox's Bazar District",
-                description = "The only coral island of Bangladesh with crystal clear blue water.",
-                image = "https://via.placeholder.com/400x300/00BCD4/FFFFFF?text=Saint+Martin's",
-                latitude = 20.5983,
-                longitude = 92.3250,
-                category = "Island"
-            )
-        )
     }
 }
