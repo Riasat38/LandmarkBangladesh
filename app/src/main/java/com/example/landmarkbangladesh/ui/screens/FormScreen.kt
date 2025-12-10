@@ -127,7 +127,7 @@ fun FormScreen(
         }
     )
 
-    // Auto-detect location when creating new landmark
+    // Auto detect location when creating new landmark
     LaunchedEffect(landmark) {
         if (landmark == null) { // Only for new landmarks
             isLocationLoading = true
@@ -524,7 +524,7 @@ fun FormScreen(
     }
 }
 
-// Helper functions
+
 private suspend fun detectCurrentLocation(
     context: Context,
     callback: (LocationCoordinates?, String?) -> Unit

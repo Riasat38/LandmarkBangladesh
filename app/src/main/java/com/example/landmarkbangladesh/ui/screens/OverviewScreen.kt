@@ -21,7 +21,14 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-
+import androidx.compose.foundation.isSystemInDarkTheme
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
+import org.osmdroid.tileprovider.tilesource.XYTileSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,15 +38,16 @@ fun OverviewScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val isDark = isSystemInDarkTheme()
 
-    // Initialize OSMDroid configuration and refresh data
+    // Initialize map
     LaunchedEffect(Unit) {
         Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", 0))
         Log.d("OverviewScreen", "Screen loaded, refreshing landmark data for map...")
         viewModel.loadLandmarks()
     }
 
-    // Show snackbar when landmarks are loaded successfully
+    // snackbar
     LaunchedEffect(uiState) {
         if (uiState is LandmarkUiState.Success) {
             snackbarHostState.showSnackbar(
@@ -90,6 +98,7 @@ fun OverviewScreen(
 
             is LandmarkUiState.Success -> {
                 val landmarks = currentState.landmarks
+                val markerDrawable = remember {createMarkerDrawable(context, isDark)}
 
                 // Map view
                 AndroidView(
@@ -101,8 +110,23 @@ fun OverviewScreen(
                     factory = { context ->
                         Log.d("OverviewScreen", "Creating MapView with ${landmarks.size} landmarks")
 
+                        //Map Color
                         MapView(context).apply {
-                            setTileSource(TileSourceFactory.MAPNIK)
+                            if (isDark){
+                                setTileSource(
+                                    XYTileSource(
+                                        "CartoDBDark",
+                                        0,
+                                        19,
+                                        256,
+                                        ".png",
+                                        arrayOf("https://basemaps.cartocdn.com/dark_all/")
+                                    )
+                                )
+                            }else{
+                                setTileSource(TileSourceFactory.MAPNIK)
+                            }
+
                             setMultiTouchControls(true)
 
                             val mapController: IMapController = controller
@@ -119,6 +143,7 @@ fun OverviewScreen(
                                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                     title = landmark.title
                                     snippet = landmark.location
+                                    icon = markerDrawable
                                 }
 
                                 overlays.add(marker)
@@ -143,6 +168,7 @@ fun OverviewScreen(
                                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                 title = landmark.title
                                 snippet = landmark.location
+                                icon = markerDrawable
                             }
 
                             mapView.overlays.add(marker)
@@ -187,4 +213,37 @@ fun OverviewScreen(
             }
         }
     }
+}
+private fun createMarkerDrawable(context: Context, isDark: Boolean): BitmapDrawable {
+    val size = 64
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val radius = size * 0.35f
+
+    // Gray outer border for emphasis
+    val grayBorder = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#616161") // Medium gray
+        style = Paint.Style.STROKE
+        strokeWidth = 6f
+    }
+
+    // Fill color
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = if (isDark) Color.parseColor("#00E5FF") else Color.parseColor("#D32F2F") // bright cyan for dark, red for light
+        style = Paint.Style.FILL
+    }
+
+    // Inner contrast stroke
+    val innerStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = if (isDark) Color.WHITE else Color.BLACK
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+    }
+
+    // Draw layers: gray border -> fill -> inner stroke
+    canvas.drawCircle(size / 2f, size / 2f, radius, grayBorder)
+    canvas.drawCircle(size / 2f, size / 2f, radius - 3f, paint)
+    canvas.drawCircle(size / 2f, size / 2f, radius - 3f, innerStroke)
+
+    return BitmapDrawable(context.resources, bitmap)
 }

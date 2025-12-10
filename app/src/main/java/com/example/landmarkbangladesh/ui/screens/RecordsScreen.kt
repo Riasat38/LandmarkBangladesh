@@ -19,7 +19,8 @@ import com.example.landmarkbangladesh.ui.viewmodel.LandmarkViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordsScreen(
-    viewModel: LandmarkViewModel = viewModel()
+    viewModel: LandmarkViewModel = viewModel(),
+    onNavigateToEdit: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val crudOperationState by viewModel.crudOperationState.collectAsState()
@@ -121,8 +122,8 @@ fun RecordsScreen(
                                 // TODO: Navigate to landmark details
                             },
                             onEdit = {
-                                // TODO: Navigate to FormScreen with landmark data
-                                Log.d("RecordsScreen", "Edit landmark: ${landmark.title}")
+                                Log.d("RecordsScreen", "Edit landmark: ${landmark.title} (id: ${landmark.id})")
+                                onNavigateToEdit(landmark.id.toString())
                             },
                             onDelete = {
                                 // Show confirmation and delete
